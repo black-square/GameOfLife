@@ -23,16 +23,41 @@ const ivec2[] initState = ivec2[] (
 vec4 initFromArray(in ivec2 uv)
 {
     const int repeat = 200;
-    ivec2 mUv = (uv + ivec2(40, 100));
+    ivec2 uv2 = (uv + ivec2(40, 100));
 
     //Let's introduce some variability
-    ivec2 shift = mUv / repeat;
+    ivec2 shift = uv2 / repeat;
     shift = ivec2(shift.x * shift.y, shift.x * shift.y);
-    mUv = mUv % repeat + shift;
+    uv2 = uv2 % repeat + shift;
 
     for(int i=0; i != initState.length(); ++i)
-        if( mUv == initState[i] )
-            return vec4(1.0,1.0,1.0,1.0);
+        if( uv2 == initState[i] )
+            return vec4(1.0, 1.0, 1.0, 1.0);
+
+    return vec4(0.0, 0.0, 0.0, 1.0);
+}
+
+const ivec2 bitmapSize = ivec2(40, 29);
+const uint[] bitmap = uint[] (BITMAP);
+
+vec4 initFromBitmap(in ivec2 uv)
+{
+    if( uv.x >= bitmapSize.x || uv.y >= bitmapSize.y )
+        return vec4(0.0, 0.0, 0.0, 1.0);
+        
+    int pos = uv.y * bitmapSize.x + uv.x;    
+    float val = float( (bitmap[pos / 32] >> (pos % 32)) & 0x1u );
+    
+    return vec4(val, val, val, 1.0);
+}
+
+const ivec2[] initState2 = ivec2[] (ACTIVE_CELLS);
+
+vec4 initFromArray2(in ivec2 uv)
+{
+    for(int i=0; i != initState2.length(); ++i)
+        if( uv == initState2[i] )
+            return vec4(1.0, 1.0, 1.0, 1.0);
 
     return vec4(0.0, 0.0, 0.0, 1.0);
 }
@@ -44,7 +69,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     if(iFrame == 0)
     {
-        fragColor = initFromArray(uv);
+        //fragColor = initFromArray(uv);
+        //fragColor = initFromArray2(uv);
+        fragColor = initFromBitmap(uv);
         return;
     }
 

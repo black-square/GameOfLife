@@ -9,8 +9,11 @@ vec4 testColor(in vec2 fragCoord )
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-	//vec2 uv = (fragCoord.xy + vec2(0,1000)) / iResolution.xy/8.0;
-    vec2 uv = fragCoord.xy / iResolution.xy/1.0;
+    const float zoom = 1.0;
+    
+    fragCoord.y = iResolution.y - fragCoord.y;
+    
+    vec2 uv = fragCoord.xy / iResolution.xy / zoom;
     
     float val = texture(iChannel0, uv)[iFrame %2];
     fragColor = vec4(testColor(fragCoord).xyz * val, 1.0);

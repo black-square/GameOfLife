@@ -1,6 +1,6 @@
 import numpy as np
 
-from mwss_gun import *
+from primer import *
 
 class RepCount:
     def __init__(self):
@@ -73,18 +73,27 @@ def main():
     print( 'Total cells: {}'.format(len(bits)) )
     print( 'Alive cells: {}'.format(sum(x != 0 for x in bits)) )
 
+    MAX_ARR_SIZE = 2000
+    needComma = False
+
     with open('active_cells_out.txt', 'w') as f:
         n = 0
         for x in range(width):
             for y in range(height):
                 if bits[y * width + x]:
-                    print('ivec2({:4},{:4}), '.format(x, y), end='', file=f )
+                    if n % MAX_ARR_SIZE == 0:
+                        print('\n\n#define ACTIVE_CELLS{} '.format(n // MAX_ARR_SIZE), end='', file=f )
+                        needComma = False
+                 
+                    if needComma:
+                        print(', ', end='', file=f  ) 
 
-                    n += 1
-
-                    if n % 9 == 0:
+                    if (n % MAX_ARR_SIZE) % 7 == 0:
                         print('\\', file=f)
-    
+
+                    print('ivec2({:3},{:3})'.format(x, y), end='', file=f )
+                    needComma = True
+                    n += 1
 
     if len(bits) % 32 != 0:
         bits.extend([0]*(32 - len(bits) % 32))
