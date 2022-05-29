@@ -26,6 +26,17 @@ vec4 initFromArray(in ivec2 uv)
     return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
+const ivec2[] initState = ivec2[](ACTIVE_CELLS0);
+
+vec4 initFromArray2(in ivec2 uv)
+{   
+    for(int i=0; i != initState.length(); ++i)
+        if( uv == initState[i] )
+            return vec4(1.0, 1.0, 1.0, 1.0);
+
+    return vec4(0.0, 0.0, 0.0, 1.0);
+}
+
 const ivec2 bitmapSize = ivec2(162, 162);
 const uint[] bitmap = uint[] (BITMAP);
 
@@ -40,26 +51,33 @@ vec4 initFromBitmap(in ivec2 uv)
     return vec4(val, val, val, 1.0);
 }
 
+const uint[] compBitmapNodes = uint[] (COMPRESSED_BITMAP_NODES);
+const uint[] compBitmapIndex = uint[] (COMPRESSED_BITMAP_INDEX);
+
+vec4 initFromCompressedBitmap(in ivec2 uv)
+{
+    if( uint(uv.x) >= uint(bitmapSize.x) || uint(uv.y) >= uint(bitmapSize.y) )
+        return vec4(0.0, 0.0, 0.0, 1.0);
+        
+    int pos = uv.y * bitmapSize.x + uv.x;
+    int wordIdx = pos / 32;
+    uint idxNode = (compBitmapIndex[wordIdx / 4] >> (wordIdx % 4) * 8) & 0xFFu;
+    float val = float( (compBitmapNodes[idxNode] >> (pos % 32)) & 0x1u );
+    
+    return vec4(val, val, val, 1.0);
+}
+
 ivec2 rot90(in ivec2 v, in int size)
 {
     return ivec2(v.y, size - v.x);
 }
 
-const ivec2[] initState = ivec2[](ACTIVE_CELLS0);
-
-vec4 initFromArray2(in ivec2 uv)
-{   
-    for(int i=0; i != initState.length(); ++i)
-        if( uv == initState[i] )
-            return vec4(1.0, 1.0, 1.0, 1.0);
-
-    return vec4(0.0, 0.0, 0.0, 1.0);
-}
-
 #if 0
     #define IMPL_SYMMETRICAL(uv) initFromArray2(uv)
-#else
+#elif 0
     #define IMPL_SYMMETRICAL(uv) initFromBitmap(uv)
+#else
+    #define IMPL_SYMMETRICAL(uv) initFromCompressedBitmap(uv)
 #endif    
 
 vec4 initFromSymmetrical(in ivec2 uv)
@@ -82,8 +100,6 @@ vec4 initFromSymmetrical(in ivec2 uv)
     else
         return IMPL_SYMMETRICAL(rot90( rot90(ivec2(uv.x - (w-1), uv.y - (w-1)), w), w));
 }
-
-
 
 ivec2 wrap( in ivec2 uv, in vec3 res )
 {
@@ -114,6 +130,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         //fragColor = initFromArray(uv);
         //fragColor = initFromArray2(uv);
         //fragColor = initFromBitmap(uv);
+        //fragColor = initFromCompressedBitmap(uv);
         fragColor = initFromSymmetrical(uv);
    
         return;

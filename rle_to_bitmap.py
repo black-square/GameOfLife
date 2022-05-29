@@ -1,5 +1,4 @@
 import numpy as np
-import pi_star as d
 
 class RepCount:
     def __init__(self):
@@ -65,34 +64,53 @@ class RLEParser:
         assert( self.x <= self.width )
         assert( self.y <= self.height )
 
-def main():
-    parser = RLEParser()
-    bits = parser.parse( d.rle_string, d.width, d.height )
+def cutTopLeftCorner(bits, width, height):
+    new_bits = []
+    half_width, half_height = width // 2, height // 2
 
-    if d.width == d.height and d.width % 2 == 0 and True:
-        print( 'Cut top-left corner due to symmetry' )
+    for y in range(half_width):
+        for x in range(half_height):      
+            new_bits.append( bits[y * width + x] ) 
+      
+    return new_bits, half_width, half_height
 
-        new_bits = []
+def convertBitsToUint32List(bits):
+    if len(bits) % 32 != 0:
+        bits = bits + [0]*(32 - len(bits) % 32)
 
-        for y in range(d.height // 2):
-            for x in range(d.width // 2):      
-                new_bits.append( bits[y * d.width + x] ) 
+    return np.frombuffer(np.packbits(bits, bitorder='little').tobytes(), dtype=np.uint32)
 
-        bits = new_bits
-        d.width //= 2   
-        d.height //= 2
+def calcCompressedBitmap(data):
+    index = []
+    nodes = []
+    node2index = {}
 
-    print( 'Total cells: {} [{} x {}]'.format(len(bits), d.width, d.height) )
-    print( 'Alive cells: {}'.format(sum(bits)) )
+    for item in data:
+        idx = node2index.get(item)
 
+        if idx is None:
+            idx = len(nodes)
+            nodes.append(item)
+            node2index[item] = idx
+        
+        index.append(idx)
+
+    if len(index) % 32 != 0:
+        index.extend([0]*(32 - len(index) % 32))
+
+    packedIndex = np.frombuffer(bytearray(index), dtype=np.uint32)
+
+    return packedIndex, nodes
+
+def saveAsActveCellsList(bits, width, height):
     MAX_ARR_SIZE = 2000
     needComma = False
 
     with open('active_cells_out.txt', 'w') as f:
         n = 0
-        for y in range(d.height):
-            for x in range(d.width):           
-                if bits[y * d.width + x]:
+        for y in range(height):
+            for x in range(width):           
+                if bits[y * width + x]:
                     if n % MAX_ARR_SIZE == 0:
                         print('\n\n#define ACTIVE_CELLS{} '.format(n // MAX_ARR_SIZE), end='', file=f )
                         needComma = False
@@ -108,30 +126,66 @@ def main():
                     needComma = True
                     n += 1
 
+def saveAsActveCellsLogicOps(bits, width, height):
     with open('active_cells_logical_out.txt', 'w') as f:
         n = 0       
-        for y in range(d.height):
-            for x in range(d.width):           
-                if bits[y * d.width + x]:
+        for y in range(height):
+            for x in range(width):           
+                if bits[y * width + x]:
                     print('if( uv.x == {:3} && uv.y == {:3} ) return resOk; \\'.format(x, y), file=f )
 
+def saveHexIntArray(data, file):
+    n = 0
+    needComma = False
+    for item in data:
+        if needComma:
+            print(', ', end='', file=file  )
 
-    if len(bits) % 32 != 0:
-        bits.extend([0]*(32 - len(bits) % 32))
+        if n % 9 == 0:
+            print('\\', file=file) 
 
-    result = np.frombuffer(np.packbits(bits, bitorder='little').tobytes(), dtype=np.uint32)
+        print('0x{:08X}u'.format(item), end='', file=file )
+        needComma = True
+        n += 1
 
-    print( 'Bitmap size: {}'.format(len(result)) )
+def saveAsBitmap(data):
+    with open('bitmap_out.txt', 'w') as f:
+        print('#define BITMAP ', end='', file=f )
+        saveHexIntArray(data, f)
 
-    with open('bitmask_out.txt', 'w') as f:
-        n = 0
-        for item in result:
-            print('0x{:08X}u, '.format(item), end='', file=f )
+def saveCompressedBitmap(index, nodes):
+    with open('bitmap_compressed_out.txt', 'w') as f:
+        print('#define COMPRESSED_BITMAP_NODES ', end='', file=f )
+        saveHexIntArray(nodes, f)
+        print('\n\n#define COMPRESSED_BITMAP_INDEX ', end='', file=f )
+        saveHexIntArray(index, f)
 
-            n += 1
+def main():
+    import pi_star as d
 
-            if n % 9 == 0:
-                print('\\', file=f)
+    parser = RLEParser()
+    bits = parser.parse( d.rle_string, d.width, d.height )
+
+    if d.width == d.height and d.width % 2 == 0 and True:
+        print( 'Cut top-left corner due to symmetry' )
+        bits, d.width, d.height = cutTopLeftCorner(bits, d.width, d.height)
+
+    print( 'Total cells: {} [{} x {}]'.format(len(bits), d.width, d.height) )
+    print( 'Alive cells: {}'.format(sum(bits)) )
+
+    saveAsActveCellsList(bits, d.width, d.height)
+    saveAsActveCellsLogicOps(bits, d.width, d.height)
+
+    words = convertBitsToUint32List(bits)
+
+    print( 'Bitmap size: {}'.format(len(words)) )
+    print( 'Bitmap unique elements: {}'.format(len(set(words))) )
+
+    saveAsBitmap(words)
+    pkIdx, pkNodes = calcCompressedBitmap(words)
+
+    print( 'Packed bitmap size: [{} + {}]'.format(len(pkIdx), len(pkNodes)) )
+    saveCompressedBitmap(pkIdx, pkNodes)
 
 if __name__ == '__main__':
     main( )
