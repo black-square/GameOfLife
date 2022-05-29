@@ -110,9 +110,9 @@ ivec2 wrap( in ivec2 uv, in vec3 res )
     #endif
 }
 
-int readState( in ivec2 uv, in int gen )
+int readState( in ivec2 uv )
 {
-    return int( texelFetch(iChannel0, wrap(uv, iChannelResolution[0]), 0)[gen] + 0.5);
+    return int( texelFetch(iChannel0, wrap(uv, iChannelResolution[0]), 0).x + 0.5);
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -135,29 +135,22 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
    
         return;
     }
-
-    int curGen = iFrame % 2;   
-    int curState = readState( uv, curGen );
+ 
+    int curState = readState( uv );
     
     int totalAliveAround = 0;
     
-    totalAliveAround += readState( uv + ivec2(-1, -1), curGen );
-    totalAliveAround += readState( uv + ivec2( 0, -1), curGen );
-    totalAliveAround += readState( uv + ivec2( 1, -1), curGen );
-    totalAliveAround += readState( uv + ivec2(-1,  0), curGen );
-    totalAliveAround += readState( uv + ivec2( 1,  0), curGen );
-    totalAliveAround += readState( uv + ivec2(-1,  1), curGen );
-    totalAliveAround += readState( uv + ivec2( 0,  1), curGen );
-    totalAliveAround += readState( uv + ivec2( 1,  1), curGen );
+    totalAliveAround += readState( uv + ivec2(-1, -1) );
+    totalAliveAround += readState( uv + ivec2( 0, -1) );
+    totalAliveAround += readState( uv + ivec2( 1, -1) );
+    totalAliveAround += readState( uv + ivec2(-1,  0) );
+    totalAliveAround += readState( uv + ivec2( 1,  0) );
+    totalAliveAround += readState( uv + ivec2(-1,  1) );
+    totalAliveAround += readState( uv + ivec2( 0,  1) );
+    totalAliveAround += readState( uv + ivec2( 1,  1) );
      
     //Rules: https://conwaylife.com/wiki/Conway%27s_Game_of_Life 
-    int newState = int(totalAliveAround == 2) * curState + int(totalAliveAround == 3);  
-            
-    ivec2 res;
-    int newGen = (iFrame + 1) % 2;
+    int newState = int(totalAliveAround == 2) * curState + int(totalAliveAround == 3);     
     
-    res[newGen] = newState;
-    res[curGen] = curState;
-    
-    fragColor = vec4(res, fragColor.zw );  
+    fragColor = vec4(newState, fragColor.yzw );  
 }
