@@ -38,15 +38,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     float camZoom = buff0.w;
     vec2 camPan = buff0.yz;
     
-    vec2 uv = fragCoord.xy / iResolution.xy;
-    uv = (uv - camPan) * camZoom;
-    
-    float val = texture(iChannel0, uv).x;
+    vec2 uv = (fragCoord.xy - camPan) * camZoom;
+    float val = texture(iChannel0, uv / iResolution.xy).x;
    
     float eps = 1.0;
     
     //Draw circle in the world's (grid) space   
-    uv *= iResolution.xy;
     val *= drawCircle( uv, floor(uv) + vec2(0.5), 0.5, eps * camZoom);
     
     //UI

@@ -162,10 +162,10 @@ const int KEY_D = 68;
 
 void calcCamera( inout vec2 pan, inout float zoom)
 {
-    //All values are in the screen space
+    //All values are in the world space
     const float zoomDelta = 0.05;
-    const float panDelta = 0.05;
-    const vec2 screenPos = vec2(0.5);
+    float panDelta = 0.025 * iResolution.x;
+    vec2 screenPos = vec2(0.5) * iResolution.xy;
     
     float prevZoom = zoom;
     
@@ -178,7 +178,7 @@ void calcCamera( inout vec2 pan, inout float zoom)
     pan.x += (keyDown(KEY_A) - keyDown(KEY_D)) * panDelta;
     pan.y += (keyDown(KEY_W) - keyDown(KEY_S)) * panDelta;
     
-    pan += (iMouse.xy - abs(iMouse.zw)) * float(iMouse.z > 0.0) * vec2(1, -1) * panDelta / iResolution.xy ;
+    pan += (iMouse.xy - abs(iMouse.zw)) * float(iMouse.z > 0.0) * vec2(1, -1) * panDelta / iResolution.x;
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
