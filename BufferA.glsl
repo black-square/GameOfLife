@@ -150,18 +150,39 @@ float calcCellState(in ivec2 uv, out vec4 buff )
     return roundEqual(totalAliveAround, 2.0) * curState + roundEqual(totalAliveAround, 3.0);  
 }
 
+const int KEY_LEFT  = 37;
+const int KEY_UP    = 38;
+const int KEY_RIGHT = 39;
+const int KEY_DOWN  = 40;
+const int KEY_SPACE = 32;
+const int KEY_W = 87;
+const int KEY_A = 65;
+const int KEY_S = 83;
+const int KEY_D = 68;
+
+void calcCamera( inout vec2 pan, inout float zoom)
+{
+    //All values are in the screen space
+    const float zoomDelta = 0.05;
+    const float panDelta = 0.05;
+    const vec2 screenPos = vec2(0.5);
+    
+    float prevZoom = zoom;
+    
+    zoom *= 1.0 - zoomDelta * (keyDown(KEY_UP) - keyDown(KEY_DOWN));
+    
+    //We always zoom around the center of the screen
+    //XCas: solve( [x / prevZoom + prevPan = screenPos, x / zoom + pan = screenPos], [pan, x] );
+    pan = screenPos + (pan - screenPos) * prevZoom / zoom;
+
+    pan.x += (keyDown(KEY_A) - keyDown(KEY_D)) * panDelta;
+    pan.y += (keyDown(KEY_W) - keyDown(KEY_S)) * panDelta;
+    
+    pan += (iMouse.xy - abs(iMouse.zw)) * float(iMouse.z > 0.0) * vec2(1, -1) * panDelta / iResolution.xy ;
+}
+
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-    const int KEY_LEFT  = 37;
-    const int KEY_UP    = 38;
-    const int KEY_RIGHT = 39;
-    const int KEY_DOWN  = 40;
-    const int KEY_SPACE = 32;
-    const int KEY_W = 87;
-    const int KEY_A = 65;
-    const int KEY_S = 83;
-    const int KEY_D = 68;
-
     ivec2 uv = ivec2(fragCoord);
     
     if(iFrame == 0 || keyHit(KEY_SPACE) > 0.0)
@@ -181,16 +202,10 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     float newState = calcCellState(uv, buff);
     
-    vec2 cam = buff.yz;
-    float zoom = buff.w;
-    zoom *= 1.0 - 0.05 * (keyDown(KEY_UP) - keyDown(KEY_DOWN));
-    
-    //Compensation for zooming around the center of the screen
-    const vec2 zoomAround = vec2(0.5);
-    cam = zoomAround - (zoomAround - cam) * buff.w / zoom;
+    vec2 camPan = buff.yz;
+    float camZoom = buff.w;
 
-    cam.x += (keyDown(KEY_A) - keyDown(KEY_D)) * 0.05;
-    cam.y += (-keyDown(KEY_W) + keyDown(KEY_S)) * 0.05;
+    calcCamera( camPan, camZoom );
     
-    fragColor = vec4(newState, cam, zoom );  
+    fragColor = vec4(newState, camPan, camZoom );  
 }
