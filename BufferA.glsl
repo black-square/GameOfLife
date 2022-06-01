@@ -101,18 +101,13 @@ float initFromSymmetrical(in ivec2 uv)
         return IMPL_SYMMETRICAL(rot90( rot90(ivec2(uv.x - (w-1), uv.y - (w-1)), w), w));
 }
 
-ivec2 wrap( in ivec2 uv, in vec3 res )
-{
-    #if 0
-        return ivec2( mod(vec2(uv), res.xy) );
-    #else
-        return uv;
-    #endif
-}
-
 vec4 readState( in ivec2 uv )
 {
-    return texelFetch( iChannel0, wrap(uv, iChannelResolution[0]), 0);
+    #if 0
+        uv = wrap(uv, iChannelResolution[0].xy);
+    #endif
+
+    return texelFetch( iChannel0, uv, 0);
 }
 
 float keyHit( in int key )
@@ -160,6 +155,22 @@ const int KEY_A = 65;
 const int KEY_S = 83;
 const int KEY_D = 68;
 
+float isBtnClicked( in vec2 center, in float radius )
+{
+    vec2 pos = abs(iMouse.zw);
+    pos = vec2(iMouse.x, iResolution.y - iMouse.y);
+    
+    pos = pos / iResolution.x;
+    
+    center = wrap( center, vec2(1.0, iResolution.y / iResolution.x ) );
+    
+    vec2 delta = pos - center;
+    float distSquared = dot(delta, delta);
+   
+    //Mobile supports button clicks only
+    return step(distSquared, radius * radius) * float(iMouse.w > 0.0 || iMouse.z > 0.0);
+}
+
 void calcCamera( inout vec2 pan, inout float zoom)
 {
     //All values are in the world space
@@ -170,6 +181,7 @@ void calcCamera( inout vec2 pan, inout float zoom)
     float prevZoom = zoom;
     
     zoom *= 1.0 - zoomDelta * (keyDown(KEY_UP) - keyDown(KEY_DOWN));
+    zoom *= 1.0 - zoomDelta * (isBtnClicked(btnZoomInPos, btnRadius) - isBtnClicked(btnZoomOutPos, btnRadius));
     
     //We always zoom around the center of the screen
     //XCas: solve( [x / prevZoom + prevPan = screenPos, x / zoom + pan = screenPos], [pan, x] );
@@ -184,8 +196,8 @@ void calcCamera( inout vec2 pan, inout float zoom)
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     ivec2 uv = ivec2(fragCoord);
-    
-    if(iFrame == 0 || keyHit(KEY_SPACE) > 0.0)
+        
+    if(iFrame == 0 || keyHit(KEY_SPACE) > 0.0 || isBtnClicked(btnResetPos, btnRadius) > 0.0 )
     {
         float val = 0.0;
         //val = initFromArray(uv);

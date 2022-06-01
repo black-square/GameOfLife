@@ -1,3 +1,18 @@
+const float btnRadius = 0.025;
+const vec2 btnZoomInPos = vec2(-btnRadius, btnRadius);
+const vec2 btnZoomOutPos = vec2(-btnRadius, 3.0 * btnRadius);
+const vec2 btnResetPos = vec2(-btnRadius, -btnRadius);
+
+vec2 wrap( in vec2 uv, in vec2 resolution )
+{
+    return mod(uv, resolution);
+}
+
+ivec2 wrap( in ivec2 uv, in vec2 resolution )
+{
+    return ivec2( wrap(vec2(uv), resolution) );
+}
+
 #define COMPRESSED_BITMAP_NODES \
 0x00000000u, 0x00400100u, 0x00000020u, 0x03800E00u, 0x00000080u, 0x1A086800u, 0x7071C000u, 0xC1630000u, 0x20000000u, \
 0x80000000u, 0x00000383u, 0x00000904u, 0x00002090u, 0x00008380u, 0x00010000u, 0x00000100u, 0x00000E00u, 0x00002C00u, \

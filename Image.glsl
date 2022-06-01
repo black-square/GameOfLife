@@ -5,7 +5,7 @@ vec4 colorize(in vec2 fragCoord )
     return vec4(col, 1.0);
 }
 
-float drawCircle( vec2 pos, vec2 center, float radius, float eps )
+float drawCircle( in vec2 pos, in vec2 center, in float radius, in float eps )
 {
     vec2 delta = pos - center;
     float distSquared = dot(delta, delta);
@@ -17,15 +17,27 @@ float drawCircle( vec2 pos, vec2 center, float radius, float eps )
     return 1.0 - smoothstep(border.x, border.y, distSquared);
 }
 
-float drawUi( vec2 uiCord, float eps )
+float DrawRing( in vec2 pos, in vec2 center, in float radius, in float aspectRatio, in float eps )
 {
-    float d = 0.025;
     float res = 1.0;
     
-    res *= drawCircle(uiCord, vec2(1.0 - d, d), d, eps);
-    res *= 1.0 - drawCircle(uiCord, vec2(1.0 - d, d), d * 0.75, eps);
+    center = wrap( center, vec2(1.0, aspectRatio) );
+    
+    res *= drawCircle(pos, center, radius, eps);
+    res *= 1.0 - drawCircle(pos, center, radius * 0.75, eps);
     
     return res;
+}
+
+float drawUi( in vec2 uiPos, in float eps, in float aspectRatio )
+{
+    float res = 1.0;
+    
+    res *= 1.0 - DrawRing(uiPos, btnZoomInPos, btnRadius, aspectRatio, eps);
+    res *= 1.0 - DrawRing(uiPos, btnZoomOutPos, btnRadius, aspectRatio, eps);
+    res *= 1.0 - DrawRing(uiPos, btnResetPos, btnRadius, aspectRatio, eps);
+    
+    return 1.0 - res;
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -50,9 +62,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     val *= drawCircle( uv, floor(uv) + vec2(0.5), 0.5, eps * camZoom);
     
     //UI
-    vec2 uiCord = fragCoord * invRes.x;
+    vec2 uiPos = fragCoord * invRes.x;
     float epsScreen = eps * invRes.x;
-    float uiVal = drawUi(uiCord, epsScreen);
+    float uiVal = drawUi(uiPos, epsScreen, invRes.x * iResolution.y);
     
     vec3 res = mix( colorize(fragCoord).xyz * val, vec3(1.0), 0.5 * uiVal );
     
