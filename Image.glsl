@@ -32,23 +32,26 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {  
     //Inverse of Y axis
     fragCoord.y = iResolution.y - fragCoord.y;
-
+    
+    vec2 invRes = 1.0 / iResolution.xy;
+    
     //Read camera info 
-    vec4 buff0 = texture(iChannel0, vec2(0,0));
+    vec4 buff0 = texture(iChannel0, fragColor.xy * invRes);
     float camZoom = buff0.w;
     vec2 camPan = buff0.yz;
     
     vec2 uv = (fragCoord.xy - camPan) * camZoom;
-    float val = texture(iChannel0, uv / iResolution.xy).x;
+    float val = texture(iChannel0, uv * invRes).x;
    
+    //Border smoothness in pixels
     float eps = 1.0;
     
     //Draw circle in the world's (grid) space   
     val *= drawCircle( uv, floor(uv) + vec2(0.5), 0.5, eps * camZoom);
     
     //UI
-    vec2 uiCord = fragCoord / iResolution.x;
-    float epsScreen = eps / iResolution.x;
+    vec2 uiCord = fragCoord * invRes.x;
+    float epsScreen = eps * invRes.x;
     float uiVal = drawUi(uiCord, epsScreen);
     
     vec3 res = mix( colorize(fragCoord).xyz * val, vec3(1.0), 0.5 * uiVal );
