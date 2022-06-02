@@ -1,7 +1,39 @@
-const float btnRadius = 0.025;
-const vec2 btnZoomInPos = vec2(-btnRadius, btnRadius);
-const vec2 btnZoomOutPos = vec2(-btnRadius, 3.0 * btnRadius);
-const vec2 btnResetPos = vec2(-btnRadius, -btnRadius);
+/* 
+    Title:  Game of Life Computes Pi
+    Author: Dmitrii Shesterkin
+
+    Description:
+        Demonstrates Conway’s Game of Life with a pattern that geometrically 
+        computes a value related to Pi.
+
+        "An arrangement of four breeders that produce Gosper glider guns that 
+        fire at each other so as to invert each others’ streams"
+
+        Looks best in fullscreen (press space to reset) on high-resolution 
+        displays (> 1080p)
+
+    Controls:
+        [W, A, S, D, mouse drag] - camera move
+        [UP, DOWN, top-right screen corner] - camera zoom
+        [SPACE, botom-right screen reset] - reset
+
+    Features:
+        * Initialized with an interesting Game Of Life pattern
+        * Mobile-friendly: 60FPS on 2016's Android phone (Mali-G71 MP8)
+        * Implements data compression to overcome constant values limit 
+          (it is especially low on mobiles)
+        * Relatively efficient branchless code
+        * SDF rendering of the cells
+
+    The pattern source:
+        "FIGURE 6.43: LIFE COMPUTES PI" "A pattern with population in 
+        generation t equal to approximately (pi-2)t^2/720"
+        from "Nathaniel Johnston and Dave Greene - "Conway’s Game of Life: 
+        Mathematics and Construction" 
+
+        https://conwaylife.com/book/periodic_circuitry
+*/
+
 
 vec2 wrap( in vec2 uv, in vec2 resolution )
 {
@@ -12,6 +44,13 @@ ivec2 wrap( in ivec2 uv, in vec2 resolution )
 {
     return ivec2( wrap(vec2(uv), resolution) );
 }
+
+//UI Elements
+const float btnRadius = 0.025;
+const vec2 btnZoomInPos = vec2(-btnRadius, btnRadius);
+const vec2 btnZoomOutPos = vec2(-btnRadius, 3.0 * btnRadius);
+const vec2 btnResetPos = vec2(-btnRadius, -btnRadius);
+
 
 #define COMPRESSED_BITMAP_NODES \
 0x00000000u, 0x00400100u, 0x00000020u, 0x03800E00u, 0x00000080u, 0x1A086800u, 0x7071C000u, 0xC1630000u, 0x20000000u, \

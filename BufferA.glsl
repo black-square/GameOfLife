@@ -1,3 +1,4 @@
+//Simple init with several Gosper glider guns
 float initFromArray(in ivec2 uv)
 {
     const ivec2[] initState = ivec2[] (
@@ -26,6 +27,7 @@ float initFromArray(in ivec2 uv)
     return 0.0;
 }
 
+//Init form the list of active cells
 const ivec2[] initState = ivec2[](ACTIVE_CELLS0);
 
 float initFromArray2(in ivec2 uv)
@@ -37,6 +39,7 @@ float initFromArray2(in ivec2 uv)
     return 0.0;
 }
 
+//Init form the BITMAP without compression
 const ivec2 bitmapSize = ivec2(162, 162);
 const uint[] bitmap = uint[] (BITMAP);
 
@@ -51,11 +54,14 @@ float initFromBitmap(in ivec2 uv)
     return val;
 }
 
+//Init form the BITMAP with compression
 const uint[] compBitmapNodes = uint[] (COMPRESSED_BITMAP_NODES);
 const uint[] compBitmapIndex = uint[] (COMPRESSED_BITMAP_INDEX);
 
 float initFromCompressedBitmap(in ivec2 uv)
 {
+    //Each `compBitmapIndex` contains 4 indexes in the list of unique 
+    //combinations of 32 active cells `compBitmapNodes`
     if( uint(uv.x) >= uint(bitmapSize.x) || uint(uv.y) >= uint(bitmapSize.y) )
         return 0.0;
         
@@ -67,6 +73,7 @@ float initFromCompressedBitmap(in ivec2 uv)
     return val;
 }
 
+// Rotate 90 deg in 2d
 ivec2 rot90(in ivec2 v, in int size)
 {
     return ivec2(v.y, size - v.x);
@@ -80,6 +87,7 @@ ivec2 rot90(in ivec2 v, in int size)
     #define IMPL_SYMMETRICAL(uv) initFromCompressedBitmap(uv)
 #endif    
 
+//Init by applying `IMPL_SYMMETRICAL` 4 times with 90 degrees rotation
 float initFromSymmetrical(in ivec2 uv)
 {
     const int w = bitmapSize.x;
@@ -101,6 +109,7 @@ float initFromSymmetrical(in ivec2 uv)
         return IMPL_SYMMETRICAL(rot90( rot90(ivec2(uv.x - (w-1), uv.y - (w-1)), w), w));
 }
 
+//Read the state of field on the previous generation
 vec4 readState( in ivec2 uv )
 {
     #if 0
@@ -120,6 +129,7 @@ float keyDown( in int key )
     return texelFetch( iChannel1, ivec2(key, 0), 0 ).x;
 }
 
+//Returns 1.0 if the distance between `a` and `b` less than 0.5
 float roundEqual( float a, float b )
 {
     return step( abs(a - b), 0.5 );
@@ -127,8 +137,11 @@ float roundEqual( float a, float b )
 
 float calcCellState(in ivec2 uv, out vec4 buff )
 {
+    //Rules: https://conwaylife.com/wiki/Conway%27s_Game_of_Life 
+    
     buff = readState( uv );
     
+    //Makes sure we won't lose precision
     float curState = floor(buff.x + 0.5);
     float totalAliveAround = 0.0;
     
@@ -141,7 +154,7 @@ float calcCellState(in ivec2 uv, out vec4 buff )
     totalAliveAround += readState( uv + ivec2( 0,  1) ).x;
     totalAliveAround += readState( uv + ivec2( 1,  1) ).x;
      
-    //Rules: https://conwaylife.com/wiki/Conway%27s_Game_of_Life 
+    //The rules of Conway's Game of Life distilled to the branchless form
     return roundEqual(totalAliveAround, 2.0) * curState + roundEqual(totalAliveAround, 3.0);  
 }
 
@@ -167,7 +180,7 @@ float isBtnClicked( in vec2 center, in float radius )
     vec2 delta = pos - center;
     float distSquared = dot(delta, delta);
    
-    //Mobile supports button clicks only
+    //Mobiles support button clicks only
     return step(distSquared, radius * radius) * float(iMouse.w > 0.0 || iMouse.z > 0.0);
 }
 
