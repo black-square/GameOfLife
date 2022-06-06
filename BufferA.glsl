@@ -109,7 +109,7 @@ float initFromSymmetrical(in ivec2 uv)
         return IMPL_SYMMETRICAL(rot90( rot90(ivec2(uv.x - (w-1), uv.y - (w-1)), w), w));
 }
 
-//Read the state of field on the previous generation
+//Read the state of field of the previous generation
 vec4 readState( in ivec2 uv )
 {
     #if 0
