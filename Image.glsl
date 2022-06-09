@@ -3,11 +3,11 @@
     Author: Dmitrii Shesterkin
 
     Description:
-        Demonstrates Conwayâ€™s Game of Life with a pattern that geometrically 
+        Demonstrates Conway’s Game of Life with a pattern that geometrically 
         computes a value related to Pi.
 
         "An arrangement of four breeders that produce Gosper glider guns that 
-        fire at each other so as to invert each othersâ€™ streams"
+        fire at each other so as to invert each others’ streams"
 
         Looks best in fullscreen (press space to reset) on high-resolution 
         displays (> 1080p)
@@ -24,11 +24,14 @@
           (it is especially low on mobiles)
         * Relatively efficient branchless code
         * SDF rendering of the cells
+        
+    History and tools:
+        https://github.com/black-square/GameOfLife
 
     The pattern source:
         "FIGURE 6.43: LIFE COMPUTES PI" "A pattern with population in 
         generation t equal to approximately (pi-2)t^2/720"
-        from "Nathaniel Johnston and Dave Greene - "Conwayâ€™s Game of Life: 
+        from "Nathaniel Johnston and Dave Greene - "Conway’s Game of Life: 
         Mathematics and Construction" 
 
         https://conwaylife.com/book/periodic_circuitry
